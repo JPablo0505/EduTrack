@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { FOLLOWUP_TYPES, FollowupType } from '@/types';
+import { FOLLOWUP_TYPES, FollowupType, Student } from '@/types';
 
 interface FollowupFormProps {
   isOpen: boolean;
@@ -20,10 +20,12 @@ interface FollowupFormProps {
     description: string;
     advisor_name: string;
   }) => Promise<void>;
-  studentId: string;
+  studentId?: string;
+  students?: Student[];
 }
 
-export function FollowupForm({ isOpen, onClose, onSubmit, studentId }: FollowupFormProps) {
+export function FollowupForm({ isOpen, onClose, onSubmit, studentId, students = [] }: FollowupFormProps) {
+  const [selectedStudentId, setSelectedStudentId] = useState('');
   const [formData, setFormData] = useState({
     type: 'Tutoría académica' as FollowupType,
     description: '',
@@ -32,6 +34,14 @@ export function FollowupForm({ isOpen, onClose, onSubmit, studentId }: FollowupF
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync or reset selectedStudentId when dialog opens or changes
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedStudentId(studentId || '');
+      setError(null);
+    }
+  }, [isOpen, studentId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -46,7 +56,14 @@ export function FollowupForm({ isOpen, onClose, onSubmit, studentId }: FollowupF
     setLoading(true);
     setError(null);
 
+    const targetStudentId = studentId || selectedStudentId;
+
     // Validaciones básicas del lado del cliente
+    if (!targetStudentId) {
+      setError('Debe seleccionar un estudiante.');
+      setLoading(false);
+      return;
+    }
     if (!formData.advisor_name.trim()) {
       setError('El nombre del consejero/docente es obligatorio.');
       setLoading(false);
@@ -60,7 +77,7 @@ export function FollowupForm({ isOpen, onClose, onSubmit, studentId }: FollowupF
 
     try {
       await onSubmit({
-        student_id: studentId,
+        student_id: targetStudentId,
         ...formData
       });
       // Limpiar formulario y cerrar
@@ -69,6 +86,7 @@ export function FollowupForm({ isOpen, onClose, onSubmit, studentId }: FollowupF
         description: '',
         advisor_name: '',
       });
+      setSelectedStudentId('');
       onClose();
     } catch (err: any) {
       setError(err.message || 'Error al registrar la bitácora de seguimiento.');
@@ -88,6 +106,29 @@ export function FollowupForm({ isOpen, onClose, onSubmit, studentId }: FollowupF
           {error && (
             <div className="bg-destructive/10 border border-destructive/20 text-destructive text-xs p-3 rounded-md">
               {error}
+            </div>
+          )}
+
+          {/* Student selection dropdown (visible only if studentId is not pre-specified) */}
+          {!studentId && (
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground">
+                Estudiante
+              </label>
+              <select
+                name="student_id"
+                value={selectedStudentId}
+                onChange={(e) => setSelectedStudentId(e.target.value)}
+                className="w-full h-8 px-2.5 rounded-md border border-input bg-background text-xs focus:outline-hidden focus:ring-2 focus:ring-ring"
+                required
+              >
+                <option value="">Seleccione un estudiante...</option>
+                {students.map((student) => (
+                  <option key={student.id} value={student.id}>
+                    {student.first_name} {student.last_name} ({student.id})
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 

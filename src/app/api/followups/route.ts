@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createFollowup } from '@/services/followupService';
+import { createFollowup, getAllFollowups } from '@/services/followupService';
 import { getStudentById } from '@/services/studentService';
 import { validateFollowup, Followup } from '@/types';
+
+/**
+ * GET /api/followups
+ * Obtiene el listado de todos los seguimientos en el sistema.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const followups = getAllFollowups();
+    return NextResponse.json(followups, { status: 200 });
+  } catch (error: any) {
+    console.error('Error en GET /api/followups:', error);
+    return NextResponse.json(
+      { success: false, message: 'Error al obtener el listado de seguimientos.', error: error.message },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * POST /api/followups
