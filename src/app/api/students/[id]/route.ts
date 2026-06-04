@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStudentById, updateStudent, deleteStudent } from '@/services/studentService';
 import { getFollowupsByStudentId } from '@/services/followupService';
-import { calculateRisk } from '@/services/riskEngine';
+import { explainRisk } from '@/services/riskEngine';
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -24,16 +24,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const followups = getFollowupsByStudentId(id);
-    const riskResult = calculateRisk(student, followups.length);
+    const explanation = explainRisk(student, followups.length);
 
     return NextResponse.json(
       {
         student,
         followups,
         risk: {
-          score: riskResult.riskScore,
-          level: riskResult.riskLevel,
-          recommendation: riskResult.recommendation
+          score: explanation.riskScore,
+          level: explanation.riskLevel,
+          recommendation: explanation.recommendation,
+          explanation
         }
       },
       { status: 200 }

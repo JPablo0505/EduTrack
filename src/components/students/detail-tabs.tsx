@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   User,
   GraduationCap,
-  Calendar,
   BookOpen,
   ClipboardList,
   AlertTriangle,
@@ -17,6 +16,8 @@ import {
   Clock,
   Plus
 } from 'lucide-react';
+import { RiskAnalysisPanel } from '@/components/students/risk-analysis-panel';
+import type { RiskExplanation } from '@/services/riskEngine';
 
 interface DetailTabsProps {
   student: Student;
@@ -25,6 +26,7 @@ interface DetailTabsProps {
     score: number;
     level: string;
     recommendation: string;
+    explanation?: RiskExplanation;
   };
   onAddFollowupClick: () => void;
 }
@@ -240,43 +242,48 @@ export function DetailTabs({ student, followups, risk, onAddFollowupClick }: Det
       </TabsContent>
 
       {/* PESTAÑA 3: RIESGO ACADÉMICO */}
-      <TabsContent value="risk" className="space-y-6 outline-none">
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="border border-border bg-card md:col-span-1">
-            <CardContent className="p-6 text-center space-y-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase">Score de Riesgo</h3>
-              <div className="relative flex items-center justify-center">
-                <div className="w-32 h-32 rounded-full border-4 border-muted flex flex-col items-center justify-center">
-                  <span className="text-3xl font-extrabold text-foreground">{risk.score}</span>
-                  <span className="text-xxs text-muted-foreground font-bold uppercase">/ 100 PTS</span>
+      <TabsContent value="risk" className="outline-none">
+        {risk.explanation ? (
+          <RiskAnalysisPanel explanation={risk.explanation} />
+        ) : (
+          /* Fallback para cuando no llega explanation (compatibilidad) */
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="border border-border bg-card md:col-span-1">
+              <CardContent className="p-6 text-center space-y-4">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase">Score de Riesgo</h3>
+                <div className="relative flex items-center justify-center">
+                  <div className="w-32 h-32 rounded-full border-4 border-muted flex flex-col items-center justify-center">
+                    <span className="text-3xl font-extrabold text-foreground">{risk.score}</span>
+                    <span className="text-xxs text-muted-foreground font-bold uppercase">/ 100 PTS</span>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Nivel de Riesgo Calculado:</p>
-                <Badge variant="outline" className={`font-bold px-3 py-1 rounded-md text-xs border ${getRiskColor(risk.level)}`}>
-                  {risk.level}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Nivel de Riesgo Calculado:</p>
+                  <Badge variant="outline" className={`font-bold px-3 py-1 rounded-md text-xs border ${getRiskColor(risk.level)}`}>
+                    {risk.level}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="border border-border bg-card md:col-span-2 flex flex-col justify-center">
-            <CardContent className="p-6 space-y-4">
-              <h3 className="font-bold text-foreground text-sm border-b border-border pb-2 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-primary" />
-                Recomendación de Permanencia NovaTech
-              </h3>
-              <div className="space-y-3 text-xs leading-relaxed">
-                <p className="text-foreground/80">
-                  El motor de cálculo analizó ponderaciones sobre el promedio semestral, créditos perdidos y participación en tutorías, arrojando el siguiente plan estratégico de acompañamiento:
-                </p>
-                <div className="bg-muted/50 border border-border p-4 rounded-xl text-foreground font-medium">
-                  {risk.recommendation}
+            <Card className="border border-border bg-card md:col-span-2 flex flex-col justify-center">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="font-bold text-foreground text-sm border-b border-border pb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-primary" />
+                  Recomendación de Permanencia NovaTech
+                </h3>
+                <div className="space-y-3 text-xs leading-relaxed">
+                  <p className="text-foreground/80">
+                    El motor de cálculo analizó ponderaciones sobre el promedio semestral, créditos perdidos y participación en tutorías, arrojando el siguiente plan estratégico de acompañamiento:
+                  </p>
+                  <div className="bg-muted/50 border border-border p-4 rounded-xl text-foreground font-medium">
+                    {risk.recommendation}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </TabsContent>
     </Tabs>
   );

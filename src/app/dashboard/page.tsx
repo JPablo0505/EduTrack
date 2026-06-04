@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Student, STUDENT_STATUSES } from '@/types';
 import { KPICards } from '@/components/dashboard/kpi-cards';
 import { AlertList } from '@/components/dashboard/alert-list';
+import { RiskEnginePanel } from '@/components/dashboard/risk-engine-panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, GraduationCap, RefreshCw } from 'lucide-react';
@@ -23,6 +24,8 @@ interface KPIData {
   atRiskRate: number;
   statusCounts: Record<string, number>;
   programStats: ProgramStat[];
+  averageRiskScore: number;
+  retentionEstimate: number;
 }
 
 export default function DashboardPage() {
@@ -125,6 +128,15 @@ export default function DashboardPage() {
         averageAcademicPerformance={kpiData.averageAcademicPerformance}
         activeAlertsCount={kpiData.activeAlertsCount}
         atRiskRate={kpiData.atRiskRate}
+      />
+
+      {/* Motor Inteligente de Riesgo Académico */}
+      <RiskEnginePanel
+        totalStudents={kpiData.totalStudents}
+        activeAlertsCount={kpiData.activeAlertsCount}
+        averageRiskScore={kpiData.averageRiskScore}
+        retentionEstimate={kpiData.retentionEstimate}
+        statusCounts={kpiData.statusCounts}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

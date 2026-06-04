@@ -1,5 +1,6 @@
 import db from '../lib/db';
-import { StudentStatus } from '../types';
+import { Student, StudentStatus } from '../types';
+import { calculateRisk } from './riskEngine';
 
 export interface ProgramStat {
   programId: number;
@@ -16,6 +17,10 @@ export interface KPIDashboardStats {
   atRiskRate: number; // Porcentaje de estudiantes en riesgo vs el total
   statusCounts: Record<StudentStatus, number>;
   programStats: ProgramStat[];
+  /** Score de riesgo promedio institucional calculado por el motor (0-100) */
+  averageRiskScore: number;
+  /** Porcentaje estimado de permanencia estudiantil (Estable + Recuperado + Seg. Preventivo) */
+  retentionEstimate: number;
 }
 
 /**
@@ -91,12 +96,43 @@ export function getKPIDashboardStats(): KPIDashboardStats {
     };
   });
 
+  // 7. Score promedio institucional — motor de riesgo sobre todos los estudiantes activos
+  const activeStudentsRows = db.prepare(`
+    SELECT s.*, COUNT(f.id) as followup_count, p.name as program_name
+    FROM students s
+    LEFT JOIN followups f ON s.id = f.student_id
+    LEFT JOIN programs p ON s.program_id = p.id
+    WHERE s.status != 'Inactivo'
+    GROUP BY s.id
+  `).all() as Array<Student & { followup_count: number }>;
+
+  const totalRiskScore = activeStudentsRows.reduce((sum, s) => {
+    return sum + calculateRisk(s, s.followup_count).riskScore;
+  }, 0);
+
+  const averageRiskScore = activeStudentsRows.length > 0
+    ? Math.round(totalRiskScore / activeStudentsRows.length)
+    : 0;
+
+  // 8. Permanencia estimada: estudiantes sin riesgo activo / total activos
+  const activeTotal = totalStudents - (statusCounts['Inactivo'] || 0);
+  const retainedCount =
+    (statusCounts['Estable'] || 0) +
+    (statusCounts['Recuperado'] || 0) +
+    (statusCounts['Seguimiento Preventivo'] || 0);
+
+  const retentionEstimate = activeTotal > 0
+    ? parseFloat(((retainedCount / activeTotal) * 100).toFixed(1))
+    : 0.0;
+
   return {
     totalStudents,
     averageAcademicPerformance,
     activeAlertsCount,
     atRiskRate,
     statusCounts,
-    programStats
+    programStats,
+    averageRiskScore,
+    retentionEstimate
   };
 }

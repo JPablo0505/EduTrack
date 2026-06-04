@@ -5,22 +5,40 @@ import { Student } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, AlertCircle, ShieldAlert, Eye } from 'lucide-react';
 
+const ALERT_PROTOCOLS: Record<string, string[]> = {
+  'Riesgo Alto': ['Tutoría obligatoria', 'Remisión a Bienestar', 'Notificar Director'],
+  'Riesgo Medio': ['Tutoría de nivelación', 'Llamada preventiva', 'Monitorear notas'],
+  'Seguimiento Preventivo': ['Correo preventivo', 'Monitoreo de corte']
+};
+
+const PROTOCOL_STYLE: Record<string, string> = {
+  'Riesgo Alto': 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
+  'Riesgo Medio': 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  'Seguimiento Preventivo': 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20'
+};
+
 interface AlertListProps {
   students: Student[];
 }
 
 export function AlertList({ students }: AlertListProps) {
-  // Filtrar solo estudiantes en Riesgo Alto o Medio
+  // Filtrar estudiantes en niveles de alerta activa (Alto, Medio, Preventivo)
   const alertStudents = students.filter(
-    (student) => student.status === 'Riesgo Alto' || student.status === 'Riesgo Medio'
+    (student) =>
+      student.status === 'Riesgo Alto' ||
+      student.status === 'Riesgo Medio' ||
+      student.status === 'Seguimiento Preventivo'
   );
 
-  // Ordenar: Riesgo Alto primero, luego Riesgo Medio
-  const sortedAlerts = [...alertStudents].sort((a, b) => {
-    if (a.status === 'Riesgo Alto' && b.status !== 'Riesgo Alto') return -1;
-    if (a.status !== 'Riesgo Alto' && b.status === 'Riesgo Alto') return 1;
-    return 0;
-  });
+  const statusOrder: Record<string, number> = {
+    'Riesgo Alto': 0,
+    'Riesgo Medio': 1,
+    'Seguimiento Preventivo': 2
+  };
+
+  const sortedAlerts = [...alertStudents].sort(
+    (a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9)
+  );
 
   if (sortedAlerts.length === 0) {
     return (
@@ -48,7 +66,7 @@ export function AlertList({ students }: AlertListProps) {
           </h3>
         </div>
         <span className="text-xxs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-semibold">
-          {sortedAlerts.length} Estudiantes
+          {sortedAlerts.length} en seguimiento
         </span>
       </div>
 
@@ -56,9 +74,10 @@ export function AlertList({ students }: AlertListProps) {
         {sortedAlerts.map((student) => (
           <div
             key={student.id}
-            className="p-4 flex items-center justify-between hover:bg-muted/10 transition-colors text-xs"
+            className="p-4 flex items-start justify-between hover:bg-muted/10 transition-colors text-xs gap-3"
           >
-            <div className="space-y-1 pr-4">
+            <div className="space-y-1.5 flex-1 min-w-0">
+              {/* Nombre y nivel */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-mono font-bold text-foreground">{student.id}</span>
                 <span className="font-medium text-foreground">
@@ -68,20 +87,40 @@ export function AlertList({ students }: AlertListProps) {
                   <Badge variant="outline" className="bg-red-500/10 text-red-600 dark:text-red-500 border-red-500/20 text-xxs font-semibold rounded-md px-1.5 py-px">
                     Riesgo Alto
                   </Badge>
-                ) : (
+                ) : student.status === 'Riesgo Medio' ? (
                   <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-500 border-amber-500/20 text-xxs font-semibold rounded-md px-1.5 py-px">
                     Riesgo Medio
                   </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-500 border-blue-500/20 text-xxs font-semibold rounded-md px-1.5 py-px">
+                    Seg. Preventivo
+                  </Badge>
                 )}
               </div>
+
+              {/* Info académica */}
               <p className="text-xxs text-muted-foreground truncate max-w-xs sm:max-w-md">
                 {student.program_name} • Semestre {student.semester}° • Promedio: {student.academic_average.toFixed(2)}
               </p>
+
+              {/* Chips de protocolo */}
+              {ALERT_PROTOCOLS[student.status] && (
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {ALERT_PROTOCOLS[student.status].map((action) => (
+                    <span
+                      key={action}
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded border text-xxs font-medium ${PROTOCOL_STYLE[student.status]}`}
+                    >
+                      {action}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Link
               href={`/students/${student.id}`}
-              className="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+              className="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground shrink-0 transition-colors mt-0.5"
               title="Ver Perfil 360°"
             >
               <Eye className="w-4 h-4" />

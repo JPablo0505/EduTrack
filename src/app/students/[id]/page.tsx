@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { Student, Followup, FollowupType } from '@/types';
+import type { RiskExplanation } from '@/services/riskEngine';
 import { DetailTabs } from '@/components/students/detail-tabs';
 import { FollowupForm } from '@/components/followups/followup-form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +18,7 @@ interface StudentProfileResponse {
     score: number;
     level: string;
     recommendation: string;
+    explanation?: RiskExplanation;
   };
 }
 
