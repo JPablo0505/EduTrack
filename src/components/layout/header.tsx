@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Sun, Moon, Bell, User } from 'lucide-react';
+import { Sun, Moon, GraduationCap } from 'lucide-react';
 
-const routeTitles: Record<string, string> = {
-  '/': 'Inicio',
-  '/dashboard': 'Dashboard de Retención',
-  '/students': 'Gestión de Estudiantes',
-  '/alerts': 'Alertas Tempranas',
-  '/followups': 'Bitácora de Seguimientos',
+const routeTitles: Record<string, { title: string; subtitle: string }> = {
+  '/': { title: 'Inicio', subtitle: 'Panel principal del sistema' },
+  '/dashboard': { title: 'Dashboard de Retención', subtitle: 'Indicadores de permanencia estudiantil' },
+  '/students': { title: 'Gestión de Estudiantes', subtitle: 'Registro y seguimiento académico' },
+  '/alerts': { title: 'Alertas Tempranas', subtitle: 'Detección de riesgo de deserción' },
+  '/followups': { title: 'Bitácora de Seguimientos', subtitle: 'Historial de intervenciones académicas' },
 };
 
 export function Header() {
@@ -34,20 +34,25 @@ export function Header() {
     setTheme(nextTheme);
   };
 
-  // Encontrar título de ruta o default
-  const title = routeTitles[pathname] || 'EduTrack CRM';
+  const current = routeTitles[pathname] ?? {
+    title: 'EduTrack CRM',
+    subtitle: 'Sistema Inteligente de Permanencia Estudiantil',
+  };
 
   return (
     <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between shrink-0">
-      {/* Title / Breadcrumb */}
-      <div>
-        <h1 className="text-lg font-semibold text-foreground tracking-tight">
-          {title}
+      {/* Page Identity */}
+      <div className="flex flex-col justify-center">
+        <h1 className="text-base font-semibold text-foreground leading-tight tracking-tight">
+          {current.title}
         </h1>
+        <p className="text-xs text-muted-foreground mt-0.5 leading-none">
+          {current.subtitle}
+        </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-4">
+      {/* Right Actions */}
+      <div className="flex items-center gap-3">
         {/* Dark Mode Toggle */}
         <button
           onClick={toggleTheme}
@@ -56,36 +61,26 @@ export function Header() {
           aria-label="Alternar tema"
         >
           {theme === 'dark' ? (
-            <Sun className="w-5 h-5" />
+            <Sun className="w-4.5 h-4.5" />
           ) : (
-            <Moon className="w-5 h-5" />
+            <Moon className="w-4.5 h-4.5" />
           )}
         </button>
 
-        {/* Notifications (Institutional Placeholder) */}
-        <button
-          className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors relative cursor-pointer"
-          title="Notificaciones"
-          aria-label="Notificaciones"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-destructive rounded-full ring-2 ring-card" />
-        </button>
+        <div className="h-5 w-px bg-border" />
 
-        <div className="h-6 w-px bg-border" />
-
-        {/* User Profile */}
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-foreground leading-none">
-              Dr. Alejandro Silva
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Coordinador Académico
-            </p>
+        {/* Institutional Identity */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <GraduationCap className="w-4 h-4 text-primary" />
           </div>
-          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-medium">
-            AS
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-foreground leading-none tracking-tight">
+              Universidad NovaTech
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-none">
+              Coordinación Académica
+            </p>
           </div>
         </div>
       </div>
